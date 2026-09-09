@@ -1,0 +1,10 @@
+# large / generated  -  never enter history
+data/
+outputs/
+baselines/
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+*.pyc
+tutorial/

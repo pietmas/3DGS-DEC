@@ -1,0 +1,13 @@
+training:
+  out: outputs/deform_smoke
+  max_steps: 60
+  log_every: 10
+  eval_every: 60
+deform:
+  reassemble_every: 10
+  checkpoint_every: 40
+  metric:
+    refactor_every: 10
+  warmup:
+    warmup_steps: 20
+    n_ramp: 20

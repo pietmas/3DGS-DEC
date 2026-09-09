@@ -1,0 +1,113 @@
+seed: 0
+validation:
+  mesh_atol: 1.0e-6            # scene units; legacy ASCII PLY rounded coordinates to six digits
+data:
+  kind: dtu                     # dataset loader: dtu or nerf_synthetic
+  nerf_synthetic_root: data/nerf_synthetic
+  dtu_root: data/dtu
+  image_size: [800, 800]        # NeRF-synthetic native
+  white_background: true        # Blender RGBA composited onto white (matches 2DGS eval)
+smoke_render:                   # budget knobs, sized for the GTX 1050 (3 GiB)
+  scene: lego
+  max_steps: 7000               # reduced budget (full 2DGS uses 30k)
+  cap_max_splats: 300000        # hard cap on densification
+  sh_degree: 3                  # drop to 2 if OOM
+dec:
+  laplacian: robust             # L0/M source: robust or igl
+  dual:
+    type: circumcentric         # dual type: circumcentric or barycentric
+    clamp: 0.5                  # lower bound on the primal edge star
+splats:                         # mesh -> splat derivation (all dimensionless)
+  gamma: 0.5                    # dual-cell coverage factor
+  eigengap_min: 1.0e-4          # umbilic threshold; training blends toward the reference frame
+  sigma_max_rel: 3.0            # scale cap as a multiple of the reference edge
+  sigma_ref: median             # clamp reference: mesh-wide median edge or local face edge
+render:                         # rasterizer boundary (matches the 2DGS repo Camera defaults)
+  znear: 0.01                   # scene units
+  zfar: 100.0
+  sh_degree: 3
+  parity_min_psnr: 40.0         # per-view agreement with the baseline renderer, dB
+training:                       # optimisation budget and appearance rates
+  scene: scan65
+  mesh: outputs/meshes/scan65_x0.ply  # extracted-mesh artifact; face count == splat count
+  out: outputs/appearance       # default run dir (checkpoint, tensorboard, metrics)
+  max_steps: 4000
+  lr:                           # appearance rates from 2DGS
+    sh_dc: 2.5e-3
+    sh_rest: 1.25e-4
+    opacity_logit: 5.0e-2
+  lambda_dssim: 0.2             # SSIM weight in the photometric loss
+  opacity_init: 0.5             # initial opacity before logit conversion
+  silhouette_iou_min: 0.8       # pre-training placement check on four views
+  log_every: 100                # steps between tensorboard scalar writes
+  eval_every: 1000              # steps between full val-split PSNR evals
+deform:                         # mesh-deformation settings
+  lr_verts: 5.3179e-5           # vertex Adam learning rate in scene units
+  reassemble_every: 50          # updates between detached operator rebuilds
+  checkpoint_every: 1000       # updates between snapshots; zero disables
+  lambda_lap: 0.0              # displacement-Laplacian loss weight
+  lambda_normal: 0.05          # robust normal-consistency weight
+  delta_huber: 0.17            # normal-angle Huber knee in radians
+  lambda_distortion: 0.01       # weight of the mean conformal MIPS distortion
+  distortion_eps_rel: 1.0e-6   # area regulariser relative to mean squared edge length
+  lambda_curv: 0.2             # curvature-weighted photometric loss
+  curv_clip: 10.0              # curvature-density upper bound
+  eigengap_clip: 1.0e-3        # shape-operator eigengap lower bound
+  max_skipped_steps: 20         # maximum consecutive updates needing gradient repair
+  reassemble_on_skip: true      # rebuild detached operators after a gradient repair
+  metric:                       # Sobolev descent metric
+    enabled: true               # enable metric-preconditioned vertex gradients
+    t: 1.0e-3                   # heat time in area units
+    laplacian: cotan            # metric Laplacian: cotan or combinatorial
+    anisotropy: none            # anisotropy: none or curvature
+    replace_lambda_normal: true # disable normal loss when anisotropy is active
+    modulator: gauss            # bending measure: gauss or dihedral
+    theta_c: null               # explicit Perona-Malik knee in radians
+    theta_c_percentile: 90      # percentile-derived knee
+    refactor_every: 50          # updates between metric factorisations
+  warmup:                       # fixed-frame warmup followed by a smooth loss ramp
+    warmup_steps: 1500          # fixed-frame warmup updates
+    n_ramp: 2000                # loss-ramp updates
+field:                          # face-cochain coupling
+  lambda4: 0.01                # per-face-normalised cochain coupling weight
+  mu: 0.1                       # opacity-logit weight inside L_field
+figures:                        # README panels, rendered from a scored run
+  run: outputs/deform_scan65    # run directory holding state.pt (geometry + cochains)
+  out: docs/images              # where the panels land
+  n_views: 3                    # evenly spaced train views, picked by rule and not by eye
+  panel_size: [5.0, 3.8]        # inches per panel; the figure is this times the grid
+  dpi: 130
+  mesh_rgb: [0.76, 0.75, 0.72]  # base albedo of the shaded mesh panel
+  light_intensity: 75000.0      # Filament sun in lux; the light is placed on the camera axis
+  align_tol_px: 5.0             # tolerated drift, projected mesh vs rendered silhouette
+eval:                           # DTU surface evaluation
+  dtu_scan: scan65              # DTU scan name
+  dtu_root: data/dtu           # holds <scan>/{image,mask,cameras.npz}
+  dtu_official: data/dtu/Official   # holds ObsMask/ and Points/stl/
+  downsample_density: 0.2      # sampling spacing in millimetres
+  max_dist_mm: 20.0            # outlier cutoff in millimetres
+edit:                           # geodesic brush, separate from the training penalty
+  checkpoint: outputs/appearance   # source model directory
+  out: outputs/edit_demo             # artifact dir: figure + leakage.csv + metrics (commit/seed)
+  radius: 0.08                         # brush radius in scene units
+  across_geo_factor: 3.0               # geodesic exclusion radius multiplier
+  paint_rgb: [0.9, 0.05, 0.05]         # brush colour in linear RGB, range [0, 1]
+  n_sources: 8                         # source faces in the leakage table
+  n_neighbors: 400                     # fixed measurement neighbourhood; do not tune to results
+  decouple_max: 0.4                    # maximum geodesic/Euclidean rank correlation
+mesh_extract:                   # frozen mesh from a trained 2DGS checkpoint
+  out: outputs/meshes/scan65_x0.ply # initial mesh consumed by training.mesh
+  checkpoint: outputs/2dgs/scan65   # 2DGS model dir (cfg_args + point_cloud/), repo-relative
+  method: poisson               # extraction method: poisson or tsdf
+  target_faces: 100000          # face budget == splat budget (5e4-3e5)
+  target_faces_tol: 0.10        # accept |F| within this relative distance of target_faces
+  mesh_res: 1024                # marching-cubes resolution
+  voxel_size: -1.0              # scene units; -1 uses depth_trunc / mesh_res
+  sdf_trunc: -1.0               # scene units; -1 uses 5 * voxel_size
+  depth_trunc: -1.0             # scene units; -1 uses twice the bounding radius
+  poisson_depth: 9              # octree depth of the screened-Poisson solve
+  crop_expand: 1.2              # crop-box scale about its centre
+  support_dist: 0.05            # maximum surface-to-support distance
+  support_opacity_min: 0.5      # minimum opacity for support centres
+  repair_max_rounds: 10         # cap on the drop-and-cap repair loop (converges in <= 3 on lego)
+  dtu_renormalise: true         # convert checkpoint coordinates to the DTU data frame

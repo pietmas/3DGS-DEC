@@ -1,0 +1,174 @@
+{
+  "review_note": "Rendered during the uncommitted 2026-09-08/09 review; commit identifies the parent revision. Legacy frame-reference replay is approximate.",
+  "commit": "e72f1cd0d686a8c6e65c04bb7e02ad7e30c59b27",
+  "source_commit": "9c1d646f69f11ed7b91db6a2ce1daff7f58793dd",
+  "seed": 0,
+  "config": {
+    "seed": 0,
+    "data": {
+      "kind": "dtu",
+      "nerf_synthetic_root": "data/nerf_synthetic",
+      "dtu_root": "data/dtu",
+      "image_size": [
+        800,
+        800
+      ],
+      "white_background": true
+    },
+    "smoke_render": {
+      "scene": "lego",
+      "max_steps": 7000,
+      "cap_max_splats": 300000,
+      "sh_degree": 3
+    },
+    "dec": {
+      "laplacian": "robust",
+      "dual": {
+        "type": "circumcentric",
+        "clamp": 0.5
+      }
+    },
+    "splats": {
+      "gamma": 0.5,
+      "eigengap_min": 0.0001,
+      "sigma_max_rel": 3.0,
+      "sigma_ref": "median"
+    },
+    "render": {
+      "znear": 0.01,
+      "zfar": 100.0,
+      "sh_degree": 3,
+      "parity_min_psnr": 40.0
+    },
+    "training": {
+      "scene": "scan65",
+      "mesh": "outputs/meshes/scan65_x0.ply",
+      "out": "outputs/appearance",
+      "max_steps": 4000,
+      "lr": {
+        "sh_dc": 0.0025,
+        "sh_rest": 0.000125,
+        "opacity_logit": 0.05
+      },
+      "lambda_dssim": 0.2,
+      "opacity_init": 0.5,
+      "silhouette_iou_min": 0.8,
+      "log_every": 100,
+      "eval_every": 1000
+    },
+    "deform": {
+      "lr_verts": 5.3179e-05,
+      "reassemble_every": 50,
+      "checkpoint_every": 1000,
+      "lambda_lap": 0.0,
+      "lambda_normal": 0.05,
+      "delta_huber": 0.17,
+      "lambda_distortion": 0.01,
+      "distortion_eps_rel": 1e-06,
+      "lambda_curv": 0.2,
+      "curv_clip": 10.0,
+      "eigengap_clip": 0.001,
+      "max_skipped_steps": 20,
+      "reassemble_on_skip": true,
+      "metric": {
+        "enabled": true,
+        "t": 0.001,
+        "laplacian": "cotan",
+        "anisotropy": "none",
+        "replace_lambda_normal": true,
+        "modulator": "gauss",
+        "theta_c": null,
+        "theta_c_percentile": 90,
+        "refactor_every": 50
+      },
+      "warmup": {
+        "warmup_steps": 1500,
+        "n_ramp": 2000
+      }
+    },
+    "field": {
+      "lambda4": 0.01,
+      "mu": 0.1
+    },
+    "eval": {
+      "dtu_scan": "scan65",
+      "dtu_root": "data/dtu",
+      "dtu_official": "data/dtu/Official",
+      "downsample_density": 0.2,
+      "max_dist_mm": 20.0
+    },
+    "edit": {
+      "checkpoint": "outputs/appearance",
+      "out": "outputs/edit_demo",
+      "radius": 0.08,
+      "across_geo_factor": 3.0,
+      "paint_rgb": [
+        0.9,
+        0.05,
+        0.05
+      ],
+      "n_sources": 8,
+      "n_neighbors": 400,
+      "decouple_max": 0.4
+    },
+    "mesh_extract": {
+      "checkpoint": "outputs/2dgs/scan65",
+      "method": "poisson",
+      "target_faces": 100000,
+      "target_faces_tol": 0.1,
+      "mesh_res": 1024,
+      "voxel_size": -1.0,
+      "sdf_trunc": -1.0,
+      "depth_trunc": -1.0,
+      "poisson_depth": 9,
+      "crop_expand": 1.2,
+      "support_dist": 0.05,
+      "support_opacity_min": 0.5,
+      "repair_max_rounds": 10,
+      "dtu_renormalise": true
+    },
+    "figures": {
+      "run": "outputs/deform_scan65",
+      "out": "docs/images",
+      "n_views": 3,
+      "panel_size": [
+        5.0,
+        3.8
+      ],
+      "dpi": 130,
+      "mesh_rgb": [
+        0.76,
+        0.75,
+        0.72
+      ],
+      "light_intensity": 75000.0,
+      "align_tol_px": 5.0
+    }
+  },
+  "run": "outputs/deform_scan65",
+  "step": 4000,
+  "views": [
+    0,
+    16,
+    32
+  ],
+  "aligned": true,
+  "align_tol_px": 5.0,
+  "checks": [
+    {
+      "view": 0,
+      "silhouette_iou": 0.9775,
+      "drift_px": 1.52
+    },
+    {
+      "view": 16,
+      "silhouette_iou": 0.9439,
+      "drift_px": 1.2
+    },
+    {
+      "view": 32,
+      "silhouette_iou": 0.9615,
+      "drift_px": 1.46
+    }
+  ]
+}

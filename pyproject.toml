@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dec3dgs"
+version = "0.0.1"
+description = "DEC-3DGS: geometry-aware Gaussian splatting on a co-evolving 2-manifold"
+requires-python = ">=3.11"
+# Runtime pins and installation order live in requirements.txt and docs/setup.md.
+
+[tool.setuptools]
+packages = ["dec3dgs"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
