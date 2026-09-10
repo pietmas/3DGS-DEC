@@ -141,21 +141,25 @@ The illustrated run uses DTU `scan65`, seed 0, 4,000 optimization steps, 100,000
 
 | Measurement | Recorded value |
 |---|---:|
-| Initial mesh Chamfer distance | 1.5170 mm |
-| Deformed mesh Chamfer distance | 1.4580 mm |
-| Accuracy / completeness | 1.5825 / 1.3334 mm |
-| Training-view PSNR | 26.48 dB |
-| Peak allocated GPU memory | 1006 MiB |
+| Initial mesh Chamfer distance | 1.517029 mm |
+| Deformed mesh Chamfer distance | 1.446190 mm |
+| Chamfer change | -0.070839 mm (-4.7%) |
+| Initial accuracy / completeness | 1.462762 / 1.571295 mm |
+| Final accuracy / completeness | 1.580328 / 1.312052 mm |
+| Training-view PSNR | 26.4874 dB |
+| Mean vertex displacement | 0.01458 |
+| Displacement Dirichlet quotient | 2608 |
+| Gradient repairs | 0 |
+| Peak allocated GPU memory | 1005 MiB |
 
 Chamfer is the mean of the two directed distances under the DTU reference protocol; lower is
-better. PSNR measures image agreement, not geometric accuracy, and these DTU views were used
-for training.
+better. Both meshes were scored with evaluator seed 0. The deformation improves completeness
+substantially while making accuracy worse, and the combined score improves by 0.070839 mm.
+PSNR measures image agreement, not geometric accuracy, and these DTU views were used for training.
 
-These measurements belong to the saved historical run, before the latest numerical and
-checkpoint fixes. Its checkpoint did not save the tangent-frame reference, so the illustrated
-splat replay is approximate. Camera choices and figure provenance are recorded in
-[figures.json](docs/images/figures.json). The corrected code has passed a 60-step GPU smoke test;
-a new full-budget result is still pending.
+These measurements and images come from the final corrected run at commit `b4f7198`. It completed
+all 4,000 updates with finite artifacts and no gradient repairs. Camera choices, checkpoint source
+and the figure checks are recorded in [figures.json](docs/images/figures.json).
 
 ## What I learned
 
@@ -174,8 +178,9 @@ surface distance. An explicit heat solve does something more specific than eithe
 
 **Small score differences need restraint.** Three historical controls spanned about 0.032 mm in
 Chamfer. GPU arithmetic and an unseeded evaluator shuffle were both possible sources of
-variation; the evaluator now seeds that shuffle. The observed range is not a significance test,
-and this single-object experiment does not establish a general advantage over other methods.
+variation; the final comparison seeds that shuffle. The observed range is not a significance test.
+The final 0.070839 mm change is encouraging, but one seeded run on one object does not establish a
+general advantage over other methods.
 
 **The representation has limits.** One splat per face ties rendering flexibility to mesh
 resolution. Fixed connectivity preserves defects in the initial topology, and near-degenerate

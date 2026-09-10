@@ -11,9 +11,9 @@ check:
 - `scan65_mesh.png`          - the mesh itself, shaded; the point is that nothing is extracted
 - `scan65_x0_vs_deformed.png`- the initial mesh against the deformed one
 
-The checked-in panels use the historical `outputs/deform_scan65` run. Its checkpoint predates
-saved frame references, so replay is approximate; `figures.json` records source and rendering
-provenance. Replace these panels only after the corrected full run is scored.
+The checked-in panels use the corrected `outputs/final_scan65` run at commit `b4f7198`.
+It completed 4,000 updates and was scored before these images were copied here. `figures.json`
+records source, configuration, views and camera checks.
 
 Optional illustrations, not completion requirements:
 
