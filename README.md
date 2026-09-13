@@ -19,6 +19,14 @@ the focus of this repository.
 much of the appearance, while the shaded surface reveals roughness and missing geometric detail.
 A convincing image is not the same thing as an accurate surface.*
 
+## Status
+
+This exploration is complete. The final `scan65` run finished all 4,000 updates with no gradient
+repairs, reached **26.4874 dB** on the training views, and changed the seeded DTU Chamfer distance
+from **1.517029 mm** to **1.446190 mm**. That is a 4.7% improvement on this object, not a benchmark
+claim. The code is covered by 139 CPU tests, and the saved mesh, checkpoint and training history
+pass the artifact checker.
+
 ## How it works
 
 The input is a set of calibrated photographs and an initial mesh obtained from a pretrained
@@ -128,7 +136,7 @@ triangles from collapsing.
 
 See [metric.py](dec3dgs/metric.py) and [deform.py](dec3dgs/deform.py).
 
-## What changed in the reconstruction
+## Final reconstruction
 
 ![Initial and deformed scan65 meshes compared under the same cameras and shading](docs/images/scan65_x0_vs_deformed.png)
 
@@ -209,7 +217,8 @@ Datasets and checkpoints are not bundled. The default experiment expects:
 - A source 2DGS checkpoint in `outputs/2dgs/scan65/` for initial mesh extraction.
 - The extracted mesh at `outputs/meshes/scan65_x0.ply` for deformation.
 
-From the repository root, check the environment and run the short example:
+From the repository root, check the environment and run the short example. Output directories
+must be new because completed runs are protected from accidental overwrite:
 
 ```sh
 .venv/bin/python -m pytest -q
@@ -218,31 +227,31 @@ From the repository root, check the environment and run the short example:
 # Only if the initial mesh does not already exist:
 .venv/bin/python scripts/extract_mesh.py
 
-.venv/bin/python -m dec3dgs.train --deform --config configs/smoke.yaml --out outputs/final_smoke
-.venv/bin/python scripts/check_run.py --run outputs/final_smoke
+.venv/bin/python -m dec3dgs.train --deform --config configs/smoke.yaml --out outputs/example_smoke
+.venv/bin/python scripts/check_run.py --run outputs/example_smoke
 ```
 
 The smoke configuration crosses warmup, the frame transition and the loss ramp in 60 steps.
 For the full 4,000-step example and its evaluation:
 
 ```sh
-.venv/bin/python -m dec3dgs.train --deform --seed 0 --out outputs/final_scan65
-.venv/bin/python scripts/check_run.py --run outputs/final_scan65
+.venv/bin/python -m dec3dgs.train --deform --seed 0 --out outputs/example_scan65
+.venv/bin/python scripts/check_run.py --run outputs/example_scan65
 
 .venv/bin/python scripts/eval_chamfer.py --seed 0 \
-    --mesh outputs/meshes/scan65_x0.ply --out outputs/final_scan65/chamfer_x0
+    --mesh outputs/meshes/scan65_x0.ply --out outputs/example_scan65/chamfer_x0
 .venv/bin/python scripts/eval_chamfer.py --seed 0 \
-    --mesh outputs/final_scan65/mesh.ply --out outputs/final_scan65/chamfer
+    --mesh outputs/example_scan65/mesh.ply --out outputs/example_scan65/chamfer
 .venv/bin/python scripts/displacement_energy.py --x0 outputs/meshes/scan65_x0.ply \
-    outputs/final_scan65/mesh.ply --out outputs/final_scan65/displacement_energy.json
-.venv/bin/python scripts/render_figure.py --run outputs/final_scan65 \
-    --out outputs/final_scan65/figures
+    outputs/example_scan65/mesh.ply --out outputs/example_scan65/displacement_energy.json
+.venv/bin/python scripts/render_figure.py --run outputs/example_scan65 \
+    --out outputs/example_scan65/figures
 ```
 
 Settings are in [configs/default.yaml](configs/default.yaml); training accepts partial overrides
-such as [configs/smoke.yaml](configs/smoke.yaml). Use unused output paths: training, extraction
-and scoring protect existing completed results. Deformation checkpoints preserve the rendering
-state for inference, but do not contain the optimizer state needed to resume training.
+such as [configs/smoke.yaml](configs/smoke.yaml). Training, extraction and scoring protect existing
+completed results. Deformation checkpoints preserve the rendering state for inference, but do not
+contain the optimizer state needed to resume training.
 
 ## Finding your way around
 
